@@ -130,16 +130,19 @@ public class UIController : MonoBehaviour
 
     private void InitializeObjectives()
     {
-        // Define objectives based on "The Crow and the Pitcher"
-        objectives.Add(new Objective("Find the water resources (a pitcher with water)."));
-        objectives.Add(new Objective("Collect 5 pebbles to raise the water level. (0/5)"));
-        // objectives.Add(new Objective("Place the pebbles in the pitcher to drink the water."));
+        // Initialize only the first objective
+        objectives.Add(new Objective("Find the water resources."));
+        SpawnObjectiveUI(objectives[0]);
+    }
 
-        // Spawn UI for each objective
-        foreach (Objective obj in objectives)
-        {
-            SpawnObjectiveUI(obj);
-        }
+    private void AddPebbleObjectives()
+    {
+        // Add the two pebble-related objectives
+        objectives.Add(new Objective("Collect 5 pebbles to raise the water level. (0/5)", false, 0, 5, true));
+        objectives.Add(new Objective("Put 5 pebbles in the pitcher to drink the water. (0/5)", false, 0, 5, true));
+        // Spawn UI for the new objectives
+        SpawnObjectiveUI(objectives[1]);
+        SpawnObjectiveUI(objectives[2]);
     }
 
     private void SpawnObjectiveUI(Objective objective)
@@ -197,20 +200,32 @@ public class UIController : MonoBehaviour
                 Debug.Log($"Objective {index + 1}: '{objectives[index].description}' completed.");
             }
 
-            // Optionally, spawn dialogue to guide the player
-            if (index < objectives.Count - 1)
+            // If the first objective is completed, add the pebble objectives
+            if (index == 0)
             {
-                SpawnDialogue($"Objective completed! Next: {objectives[index + 1].description}", Color.green, 5f);
+                AddPebbleObjectives();
+                // SpawnDialogue("Water resources found! New objectives: Collect and place pebbles.", Color.green, 5f);
             }
             else
             {
-                SpawnDialogue("All objectives completed! The crow can now drink the water!", Color.green, 5f);
+                // Check if both pebble objectives (indices 1 and 2) are completed
+                bool allPebbleObjectivesCompleted = objectives[1].isCompleted && objectives[2].isCompleted;
+
+                if (allPebbleObjectivesCompleted)
+                {
+                    // SpawnDialogue("All objectives completed! The crow can now drink the water!", Color.green, 5f);
+                }
             }
         }
         else
         {
             Debug.LogWarning("Invalid objective index!");
         }
+    }
+
+    public List<Objective> GetObjectives()
+    {
+        return objectives;
     }
     #endregion
 }

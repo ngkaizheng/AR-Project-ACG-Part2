@@ -2104,7 +2104,7 @@ GameObject:
   - component: {fileID: 5694393237476221904}
   m_Layer: 0
   m_Name: lb_crowHQ
-  m_TagString: lb_bird
+  m_TagString: Bird
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2323,6 +2323,8 @@ MonoBehaviour:
   birdAnim: {fileID: 5694393237476221904}
   dialogueUIHolder: {fileID: 6390958778304920597}
   birdCollider: {fileID: 4142136983225727185}
+  collectDistance: 0.1
+  isCarryingPebble: 0
 --- !u!114 &5694393237476221904
 MonoBehaviour:
   m_ObjectHideFlags: 0

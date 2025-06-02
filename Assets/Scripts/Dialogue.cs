@@ -5,9 +5,10 @@ public enum DialogueSequence
 {
     StartingDialogue,
     FoundPitcher,
-    FoundRock1,
-    SolutionRealization,
-    SuccessEnding
+    FoundPebbles1,
+    DropPebble1,
+    DropPebble2,
+    ReachWater,
 }
 
 public static class Dialogue
@@ -19,42 +20,49 @@ public static class Dialogue
             {
                 "Ahh... I'm so thirsty...",
                 "I need to find some water.",
-                "This desert is so dry..."
+                "This place is so dry.",
             }
         },
         {
             DialogueSequence.FoundPitcher, new[]
             {
-                "Oh look, a pitcher!",
-                "Maybe it has water?",
-                "This pitcher has water, but it’s too low!"
+                "A pitcher! Maybe it has water!",
+                "Water! But... I can't reach it.",
+                "The water is too low\nfor my beak to touch.",
+                "Think, think...\nHow can I make the water rise?",
+                "Pebbles! If I add pebbles,\nthe water will come up!"
             }
         },
         {
-            DialogueSequence.FoundRock1, new[]
+            DialogueSequence.FoundPebbles1, new[]
             {
-                "A rock! Maybe I can use it to reach the water.",
-                "Maybe I can drop it in the pitcher?"
+                "Pebbles! These will help!",
+                "One by one, I'll drop them in.\nThe water must rise!"
             }
         },
         {
-            DialogueSequence.SolutionRealization, new[]
+            DialogueSequence.DropPebble1, new[]
             {
-                "If only I could reach it...",
-                "Maybe I can knock it over?",
-                "No good... It won’t budge.",
-                "Wait... What if I drop pebbles in it?",
-                "The water’s rising!",
-                "It’s working! Just a bit more..."
+                "Yes! The water is coming up!",
+                "More pebbles...\njust a little higher..."
             }
         },
         {
-            DialogueSequence.SuccessEnding, new[]
+            DialogueSequence.DropPebble2, new[]
             {
-                "Finally! I can drink!",
-                "Where there’s a will, there’s a way."
+                "Almost there!\nOne more should do it!",
+                "I can see the water\nrising with each stone!"
             }
-        }
+        },
+        {
+            DialogueSequence.ReachWater, new[]
+            {
+                "Success! The water reaches me now!",
+                "At last... cool, fresh water!\nI'm saved!",
+                "Small steps can solve big problems.\nPatience and cleverness win!",
+                "When faced with a challenge,\nthink like the crow with the pitcher!"
+            }
+        },
     };
 
     public static string[] GetLines(DialogueSequence sequence)

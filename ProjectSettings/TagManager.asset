@@ -6,6 +6,8 @@ TagManager:
   tags:
   - lb_bird
   - Rock
+  - Bird
+  - Pitcher
   layers:
   - Default
   - TransparentFX

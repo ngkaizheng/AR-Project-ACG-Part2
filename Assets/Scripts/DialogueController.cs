@@ -9,14 +9,8 @@ public class DialogueController : MonoBehaviour
     [SerializeField] private Color dialogueColor = Color.green;
     [SerializeField] private float defaultDuration = 3f;
 
-    // Map each sequence to its starting index and line count
-    private readonly Dictionary<DialogueSequence, (int startIndex, int count)> sequenceMap = new()
-    {
-        { DialogueSequence.StartingDialogue, (0, 3) },        // Lines 0-2
-        { DialogueSequence.FoundPitcher, (3, 3) },            // Lines 3-5
-        { DialogueSequence.SolutionRealization, (6, 6) },     // Lines 6-11
-        { DialogueSequence.SuccessEnding, (12, 2) }           // Lines 12-13
-    };
+    [Header("Dialogue Tracking")]
+    [SerializeField] private List<bool> dialoguePlayedStatus = new List<bool>();
 
     private void Awake()
     {
@@ -26,8 +20,22 @@ public class DialogueController : MonoBehaviour
             Instance = this;
     }
 
+    private void Start()
+    {
+        InitializeDialogueTracking();
+    }
+
     public void PlayDialogueSequence(DialogueSequence sequence, float delayBetweenLines = 1.5f)
     {
+        // Check if the sequence has already been played
+        if (dialoguePlayedStatus[(int)sequence])
+        {
+            Debug.LogWarning($"Dialogue sequence {sequence} has already been played.");
+            return;
+        }
+        // Mark the sequence as played
+        dialoguePlayedStatus[(int)sequence] = true;
+
         string[] lines = Dialogue.GetLines(sequence);
         StartCoroutine(PlaySequenceCoroutine(lines, delayBetweenLines));
     }
@@ -46,5 +54,20 @@ public class DialogueController : MonoBehaviour
                 yield return new WaitForSeconds(delay);
             }
         }
+    }
+
+    public void InitializeDialogueTracking()
+    {
+        dialoguePlayedStatus.Clear();
+        int sequenceLength = System.Enum.GetValues(typeof(DialogueSequence)).Length;
+        for (int i = 0; i < sequenceLength; i++)
+        {
+            dialoguePlayedStatus.Add(false);
+        }
+    }
+
+    public List<bool> GetDialoguePlayedStatus()
+    {
+        return dialoguePlayedStatus;
     }
 }

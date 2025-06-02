@@ -9,6 +9,7 @@ using UnityEngine.XR.ARSubsystems;
 public class PlaneDetectionController : MonoBehaviour
 {
     private ARPlaneManager planeManager;
+    private ARAnchorManager anchorManager;
     public BirdController birdController;
     [SerializeField]
     private float accumulatedPlaneSize = 0.0f;
@@ -26,6 +27,15 @@ public class PlaneDetectionController : MonoBehaviour
         else
         {
             Debug.Log("ARPlaneManager found and initialized.");
+        }
+        anchorManager = GetComponent<ARAnchorManager>();
+        if (anchorManager == null)
+        {
+            Debug.LogError("ARAnchorManager component not found!");
+        }
+        else
+        {
+            Debug.Log("ARAnchorManager found and initialized.");
         }
         raycastManager = FindObjectOfType<ARRaycastManager>();
     }
@@ -48,6 +58,7 @@ public class PlaneDetectionController : MonoBehaviour
         }
     }
 
+    #region OnPlanesChanged Event Handler
     private void OnPlanesChanged(ARPlanesChangedEventArgs args)
     {
         // Log added planes
@@ -114,6 +125,7 @@ public class PlaneDetectionController : MonoBehaviour
         int totalPlanes = planeManager.trackables.count;
         Debug.Log($"Total active planes: {totalPlanes}");
     }
+    #endregion
 
     // Optional: Method to manually check current planes (can be called from another script or UI)
     public void LogCurrentPlanes()
@@ -138,73 +150,7 @@ public class PlaneDetectionController : MonoBehaviour
         Debug.Log($"Total current planes: {totalPlanes}");
     }
 
-    // public void SpawnRocks(int count, GameObject rockPrefab)
-    // {
-    //     if (rockPrefab == null)
-    //     {
-    //         Debug.LogError("Rock prefab is not assigned in PlaneDetectionController!");
-    //         return;
-    //     }
-
-    //     if (planeManager == null || planeManager.trackables.count == 0)
-    //     {
-    //         Debug.LogWarning("No planes detected to spawn rocks on.");
-    //         return;
-    //     }
-
-    //     List<Vector3> spawnedRockPositions = new List<Vector3>(); // Track spawned rock positions
-
-    //     foreach (var plane in planeManager.trackables)
-    //     {
-    //         ARPlane arPlane = plane as ARPlane;
-    //         if (arPlane == null || arPlane.boundary == null || arPlane.boundary.Count() == 0)
-    //         {
-    //             Debug.LogWarning($"Skipping plane {plane.trackableId} due to missing or invalid boundary.");
-    //             continue;
-    //         }
-
-    //         for (int i = 0; i < count; i++)
-    //         {
-    //             Vector3 spawnPosition = GetRandomPointInPlaneBoundary(arPlane);
-
-    //             // Ensure rocks are not too close to each other
-    //             if (IsPositionTooClose(spawnPosition, spawnedRockPositions, 0.5f)) // Minimum distance of 0.5 units
-    //             {
-    //                 i--; // Retry spawning this rock
-    //                 continue;
-    //             }
-
-    //             GameObject rock = Instantiate(rockPrefab, spawnPosition, Quaternion.identity);
-    //             spawnedRockPositions.Add(spawnPosition); // Add to the list of spawned positions
-    //             Debug.Log($"Rock spawned at {spawnPosition} on plane {arPlane.trackableId}");
-    //         }
-    //     }
-
-    //     Debug.Log($"Spawned {count} rocks on detected planes.");
-    // }
-
-    // private Vector3 GetRandomPointInPlaneBoundary(ARPlane arPlane)
-    // {
-    //     // Get a random point within the plane's boundary
-    //     int randomIndex = Random.Range(0, arPlane.boundary.Count());
-    //     Vector2 randomBoundaryPoint = arPlane.boundary[randomIndex];
-
-    //     // Convert boundary point to world position
-    //     Vector3 localPosition = new Vector3(randomBoundaryPoint.x, 0, randomBoundaryPoint.y);
-    //     return arPlane.transform.TransformPoint(localPosition);
-    // }
-
-    // private bool IsPositionTooClose(Vector3 position, List<Vector3> existingPositions, float minDistance)
-    // {
-    //     foreach (var existingPosition in existingPositions)
-    //     {
-    //         if (Vector3.Distance(position, existingPosition) < minDistance)
-    //         {
-    //             return true; // Position is too close to an existing rock
-    //         }
-    //     }
-    //     return false; // Position is valid
-    // }
+    #region Spawn Rocks on Detected Planes
     public void SpawnRocks(int count, GameObject rockPrefab)
     {
         if (rockPrefab == null)
@@ -358,4 +304,103 @@ public class PlaneDetectionController : MonoBehaviour
         }
         return false;
     }
+    #endregion
+
+    #region Spawn Pitcher on Detected Plane
+    // public GameObject SpawnPitcher(GameObject pitcherPrefab)
+    // {
+    //     List<ARPlane> activePlanes = new List<ARPlane>();
+    //     foreach (var plane in planeManager.trackables)
+    //     {
+    //         if (plane.boundary != null && plane.boundary.Count() > 2)
+    //         {
+    //             activePlanes.Add(plane);
+    //         }
+    //         else
+    //         {
+    //             Debug.LogWarning($"Skipping plane {plane.trackableId} due to invalid boundary.");
+    //         }
+    //     }
+    //     if (activePlanes.Count == 0)
+    //     {
+    //         Debug.LogWarning("No valid planes with boundaries to spawn pitcher on.");
+    //         return null;
+    //     }
+    //     ARPlane selectedPlane = activePlanes[Random.Range(0, activePlanes.Count)];
+    //     Vector3 spawnPosition = GetRandomPointInPlaneBoundary(selectedPlane);
+    //     // Verify the point is on the plane using raycasting
+    //     List<ARRaycastHit> hits = new List<ARRaycastHit>();
+    //     Vector2 screenPoint = Camera.main.WorldToScreenPoint(spawnPosition);
+    //     if (raycastManager.Raycast(screenPoint, hits, TrackableType.Planes))
+    //     {
+    //         foreach (var hit in hits)
+    //         {
+    //             if (hit.trackableId == selectedPlane.trackableId)
+    //             {
+    //                 GameObject pitcher = Instantiate(pitcherPrefab, hit.pose.position, Quaternion.identity);
+    //                 Debug.Log($"Pitcher spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
+    //                 return pitcher;
+    //             }
+    //         }
+    //     }
+    //     Debug.LogWarning("Failed to spawn pitcher: No valid hit on the selected plane.");
+    //     return null;
+    // }
+    public GameObject SpawnPitcher(GameObject pitcherPrefab)
+    {
+        if (pitcherPrefab == null)
+        {
+            Debug.LogError("Pitcher prefab is not assigned!");
+            return null;
+        }
+
+        List<ARPlane> activePlanes = new List<ARPlane>();
+        foreach (var plane in planeManager.trackables)
+        {
+            if (plane.boundary != null && plane.boundary.Count() > 2)
+            {
+                activePlanes.Add(plane);
+            }
+            else
+            {
+                Debug.LogWarning($"Skipping plane {plane.trackableId} due to invalid boundary.");
+            }
+        }
+
+        if (activePlanes.Count == 0)
+        {
+            Debug.LogWarning("No valid planes with boundaries to spawn pitcher on.");
+            return null;
+        }
+
+        int maxAttempts = 10; // Maximum number of attempts to spawn the pitcher
+        while (maxAttempts > 0)
+        {
+            ARPlane selectedPlane = activePlanes[Random.Range(0, activePlanes.Count)];
+            Vector3 spawnPosition = GetRandomPointInPlaneBoundary(selectedPlane);
+
+            // Verify the point is on the plane using raycasting
+            List<ARRaycastHit> hits = new List<ARRaycastHit>();
+            Vector2 screenPoint = Camera.main.WorldToScreenPoint(spawnPosition);
+            if (raycastManager.Raycast(screenPoint, hits, TrackableType.Planes))
+            {
+                foreach (var hit in hits)
+                {
+                    if (hit.trackableId == selectedPlane.trackableId)
+                    {
+                        GameObject pitcher = Instantiate(pitcherPrefab, hit.pose.position, Quaternion.identity);
+                        Debug.Log($"Pitcher spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
+                        return pitcher;
+                    }
+                }
+            }
+
+            maxAttempts--;
+            Debug.LogWarning($"Attempt to spawn pitcher failed. Remaining attempts: {maxAttempts}");
+        }
+
+        Debug.LogWarning("Failed to spawn pitcher after multiple attempts.");
+        return null;
+    }
+    #endregion
 }
