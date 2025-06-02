@@ -95,13 +95,19 @@ public class GameController : MonoBehaviour
             {
                 var hitPose = hits[0].pose;
                 // Check for colliders near the hit position
-                Collider[] colliders = Physics.OverlapSphere(hitPose.position, 0.2f); // Adjust radius as needed
+                Collider[] colliders = Physics.OverlapSphere(hitPose.position, 0.01f); // Adjust radius as needed
                 bool objectHandled = false;
 
                 foreach (var collider in colliders)
                 {
                     GameObject hitObject = collider.gameObject;
                     Debug.Log($"Hit object: {hitObject.name} at position: {hitObject.transform.position}, Tag: {hitObject.tag}");
+
+                    if (collider.isTrigger)
+                    {
+                        Debug.Log($"Skipping trigger collider: {hitObject.name}");
+                        continue;
+                    }
 
                     // Skip the bird's own GameObject
                     if (hitObject == bird?.gameObject)

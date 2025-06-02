@@ -128,7 +128,7 @@ public class Bird : MonoBehaviour
         pebblesCollected++;
         UIController.Instance.UpdateObjectiveProgress(1, pebblesCollected); // Update objective progress (index 1 for pebble collection)
         isCarryingPebble = true;
-        Destroy(pebble);
+        Destroy(pebble.transform.root.gameObject); // Destroy the pebble GameObject
     }
 
     public void FlyToTarget(Vector3 targetPosition)

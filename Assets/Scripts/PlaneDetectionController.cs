@@ -307,45 +307,6 @@ public class PlaneDetectionController : MonoBehaviour
     #endregion
 
     #region Spawn Pitcher on Detected Plane
-    // public GameObject SpawnPitcher(GameObject pitcherPrefab)
-    // {
-    //     List<ARPlane> activePlanes = new List<ARPlane>();
-    //     foreach (var plane in planeManager.trackables)
-    //     {
-    //         if (plane.boundary != null && plane.boundary.Count() > 2)
-    //         {
-    //             activePlanes.Add(plane);
-    //         }
-    //         else
-    //         {
-    //             Debug.LogWarning($"Skipping plane {plane.trackableId} due to invalid boundary.");
-    //         }
-    //     }
-    //     if (activePlanes.Count == 0)
-    //     {
-    //         Debug.LogWarning("No valid planes with boundaries to spawn pitcher on.");
-    //         return null;
-    //     }
-    //     ARPlane selectedPlane = activePlanes[Random.Range(0, activePlanes.Count)];
-    //     Vector3 spawnPosition = GetRandomPointInPlaneBoundary(selectedPlane);
-    //     // Verify the point is on the plane using raycasting
-    //     List<ARRaycastHit> hits = new List<ARRaycastHit>();
-    //     Vector2 screenPoint = Camera.main.WorldToScreenPoint(spawnPosition);
-    //     if (raycastManager.Raycast(screenPoint, hits, TrackableType.Planes))
-    //     {
-    //         foreach (var hit in hits)
-    //         {
-    //             if (hit.trackableId == selectedPlane.trackableId)
-    //             {
-    //                 GameObject pitcher = Instantiate(pitcherPrefab, hit.pose.position, Quaternion.identity);
-    //                 Debug.Log($"Pitcher spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
-    //                 return pitcher;
-    //             }
-    //         }
-    //     }
-    //     Debug.LogWarning("Failed to spawn pitcher: No valid hit on the selected plane.");
-    //     return null;
-    // }
     public GameObject SpawnPitcher(GameObject pitcherPrefab)
     {
         if (pitcherPrefab == null)
