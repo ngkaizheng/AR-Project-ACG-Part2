@@ -26,9 +26,11 @@ public class BirdController : MonoBehaviour
 
     public bool sizeThresholdMet = false;
     public bool birdSpawned = false;
+    public Bird bird;
     private Vector2 previousTapPosition;
     private static List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
     public static event Action<bool> OnSizeThresholdMet;
+    public static event Action<Bird> OnBirdSpawned;
 
     private void OnEnable()
     {
@@ -66,9 +68,11 @@ public class BirdController : MonoBehaviour
         if (raycastManager.Raycast(screenPosition, raycastHits, TrackableType.Planes))
         {
             Pose hitPose = raycastHits[0].pose;
-            Instantiate(birdPrefab, hitPose.position, Quaternion.identity);
+            GameObject birdObject = Instantiate(birdPrefab, hitPose.position, Quaternion.identity);
+            bird = birdObject.GetComponent<Bird>();
             birdSpawned = true;
 
+            OnBirdSpawned?.Invoke(bird);
             OnSizeThresholdMet?.Invoke(birdSpawned);
             Debug.Log("Bird spawned at: " + hitPose.position);
         }

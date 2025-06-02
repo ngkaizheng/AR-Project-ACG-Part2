@@ -1,19 +1,20 @@
 using UnityEngine;
 using System.Collections;
 
+public enum birdBehaviors
+{
+    sing,
+    preen,
+    ruffle,
+    peck,
+    hopForward,
+    hopBackward,
+    hopLeft,
+    hopRight,
+}
 public class BirdAnim : MonoBehaviour
 {
-    enum birdBehaviors
-    {
-        sing,
-        preen,
-        ruffle,
-        peck,
-        hopForward,
-        hopBackward,
-        hopLeft,
-        hopRight,
-    }
+
 
     public AudioClip song1;
     public AudioClip song2;
@@ -35,8 +36,8 @@ public class BirdAnim : MonoBehaviour
     bool landing = false;
     bool onGround = true;
     bool dead = false;
-    BoxCollider birdCollider;
-    SphereCollider solidCollider;
+    // BoxCollider birdCollider;
+    // SphereCollider solidCollider;
     float distanceToTarget = 0.0f;
     float agitationLevel = 0.5f;
     float originalAnimSpeed = 1.0f;
@@ -58,12 +59,12 @@ public class BirdAnim : MonoBehaviour
 
     void OnEnable()
     {
-        birdCollider = gameObject.GetComponent<BoxCollider>();
-        solidCollider = gameObject.GetComponent<SphereCollider>();
+        // birdCollider = gameObject.GetComponent<BoxCollider>();
+        // solidCollider = gameObject.GetComponent<SphereCollider>();
         anim = gameObject.GetComponent<Animator>();
 
-        if (!birdCollider) Debug.LogError("BoxCollider not found on " + gameObject.name);
-        if (!solidCollider) Debug.LogError("SphereCollider not found on " + gameObject.name);
+        // if (!birdCollider) Debug.LogError("BoxCollider not found on " + gameObject.name);
+        // if (!solidCollider) Debug.LogError("SphereCollider not found on " + gameObject.name);
         if (!anim) Debug.LogError("Animator not found on " + gameObject.name);
 
         idleAnimationHash = Animator.StringToHash("Base Layer.Idle");
@@ -173,7 +174,7 @@ public class BirdAnim : MonoBehaviour
         // Landing phase
         flying = false;
         landing = true;
-        if (solidCollider) solidCollider.enabled = false;
+        // if (solidCollider) solidCollider.enabled = false;
         anim.SetBool(flyingBoolHash, false);
         anim.SetBool(landingBoolHash, true);
         rb.velocity = Vector3.zero;
@@ -267,7 +268,7 @@ public class BirdAnim : MonoBehaviour
         }
     }
 
-    void DisplayBehavior(birdBehaviors behavior)
+    public void DisplayBehavior(birdBehaviors behavior)
     {
         idle = false;
         switch (behavior)

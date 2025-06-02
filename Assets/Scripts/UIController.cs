@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
@@ -11,6 +13,18 @@ public class UIController : MonoBehaviour
 
     [Header("Spawn UI Settings")]
     public GameObject spawnUIHolder;
+
+    [Header("Dialogue Settings")]
+    [SerializeField] private GameObject dialogueUIHolder; // Parent for dialogue prefabs
+    [SerializeField] private GameObject dialoguePrefab; // Prefab for dialogue
+    [SerializeField] private List<GameObject> dialogueList = new List<GameObject>();
+
+    [Header("Objective UI Settings")]
+    [SerializeField] private GameObject objectiveUIHolder; // Parent for objective prefabs
+    [SerializeField] private GameObject objectivePrefab; // Prefab for objective UI
+    [SerializeField] private List<Objective> objectives = new List<Objective>(); // List of objectives
+    [SerializeField] private List<GameObject> objectiveInstances = new List<GameObject>(); // Active objective UI instances
+
 
     public static UIController Instance;
 
@@ -36,6 +50,16 @@ public class UIController : MonoBehaviour
             Debug.Log("Spawn UI Holder initialized and set to inactive.");
         }
 
+        if (objectiveUIHolder == null)
+        {
+            Debug.LogWarning("Objective UI Holder is not assigned! Please assign it in the inspector.");
+        }
+        else
+        {
+            objectiveUIHolder.SetActive(false); // Ensure the UI is initially disabled
+            Debug.Log("Objective UI Holder initialized and set to inactive.");
+        }
+
         if (Instance == null)
         {
             Instance = this;
@@ -45,6 +69,7 @@ public class UIController : MonoBehaviour
         {
             Destroy(gameObject); // Ensure only one instance exists
         }
+        InitializeObjectives();
     }
 
     void Update()
@@ -63,4 +88,129 @@ public class UIController : MonoBehaviour
             Debug.LogWarning("Spawn UI Holder is not assigned!");
         }
     }
+
+    public void SetDialogueUIHolder(GameObject newDialogueUIHolder)
+    {
+        dialogueUIHolder = newDialogueUIHolder;
+        Debug.Log("Dialogue UI Holder has been set.");
+    }
+
+    public void SpawnDialogue(string textContent, Color borderColor, float duration)
+    {
+        if (dialoguePrefab != null && dialogueUIHolder != null)
+        {
+            GameObject dialogueInstance = Instantiate(dialoguePrefab, dialogueUIHolder.transform);
+            DialoguePrefabController dialogueController = dialogueInstance.GetComponent<DialoguePrefabController>();
+
+            if (dialogueController != null)
+            {
+                dialogueController.InitializeDialogue(textContent, borderColor, duration);
+                dialogueList.Add(dialogueInstance); // Add to the list for tracking
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Dialogue prefab or dialogueUIHolder is not assigned!");
+        }
+    }
+
+    #region Objective Management
+    public void EnableObjectiveUI(bool enable)
+    {
+        if (objectiveUIHolder != null)
+        {
+            objectiveUIHolder.SetActive(enable);
+            Debug.Log($"Objective UI is now {(enable ? "enabled" : "disabled")}");
+        }
+        else
+        {
+            Debug.LogWarning("Objective UI Holder is not assigned!");
+        }
+    }
+
+    private void InitializeObjectives()
+    {
+        // Define objectives based on "The Crow and the Pitcher"
+        objectives.Add(new Objective("Find the water resources (a pitcher with water)."));
+        objectives.Add(new Objective("Collect 5 pebbles to raise the water level. (0/5)"));
+        // objectives.Add(new Objective("Place the pebbles in the pitcher to drink the water."));
+
+        // Spawn UI for each objective
+        foreach (Objective obj in objectives)
+        {
+            SpawnObjectiveUI(obj);
+        }
+    }
+
+    private void SpawnObjectiveUI(Objective objective)
+    {
+        if (objectivePrefab != null && objectiveUIHolder != null)
+        {
+            GameObject objectiveInstance = Instantiate(objectivePrefab, objectiveUIHolder.transform);
+            ObjectivePrefabController objectiveController = objectiveInstance.GetComponent<ObjectivePrefabController>();
+
+            if (objectiveController != null)
+            {
+                objectiveController.InitializeObjective(objective.description, objective.isCompleted);
+                objectiveInstances.Add(objectiveInstance);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Objective prefab or objectiveUIHolder is not assigned!");
+        }
+    }
+
+    public void UpdateObjectiveProgress(int index, int newProgress)
+    {
+        if (index >= 0 && index < objectives.Count && objectives[index].isProgressBased)
+        {
+            Objective obj = objectives[index];
+            obj.currentProgress = Mathf.Clamp(newProgress, 0, obj.targetProgress);
+            ObjectivePrefabController controller = objectiveInstances[index].GetComponent<ObjectivePrefabController>();
+            if (controller != null)
+            {
+                controller.UpdateObjectiveText(obj.GetFormattedDescription());
+                Debug.Log($"Objective {index + 1} progress updated: {obj.currentProgress}/{obj.targetProgress}");
+            }
+
+            if (obj.currentProgress >= obj.targetProgress && !obj.isCompleted)
+            {
+                CompleteObjective(index);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Invalid objective index or objective is not progress-based!");
+        }
+    }
+
+    public void CompleteObjective(int index)
+    {
+        if (index >= 0 && index < objectives.Count)
+        {
+            objectives[index].isCompleted = true;
+            ObjectivePrefabController controller = objectiveInstances[index].GetComponent<ObjectivePrefabController>();
+            if (controller != null)
+            {
+                controller.UpdateObjectiveStatus(true);
+                Debug.Log($"Objective {index + 1}: '{objectives[index].description}' completed.");
+            }
+
+            // Optionally, spawn dialogue to guide the player
+            if (index < objectives.Count - 1)
+            {
+                SpawnDialogue($"Objective completed! Next: {objectives[index + 1].description}", Color.green, 5f);
+            }
+            else
+            {
+                SpawnDialogue("All objectives completed! The crow can now drink the water!", Color.green, 5f);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Invalid objective index!");
+        }
+    }
+    #endregion
 }

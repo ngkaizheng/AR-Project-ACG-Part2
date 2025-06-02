@@ -16,11 +16,21 @@ public class Bird : MonoBehaviour
         set => XRInputReaderUtility.SetInputProperty(ref m_TapStartPositionInput, value, this);
     }
 
+    [Header("Bird Animation")]
+    [SerializeField] public BirdAnim birdAnim;
+
+    [Header("Dialogue UI")]
+    public GameObject dialogueUIHolder;
+
+    [Header("Collider")]
+    [SerializeField] private Collider birdCollider;
+
+    [Header("Pebble Collection")]
+    [SerializeField] private float collectDistance = 1f; // Max distance to collect a pebble
+    private int pebblesCollected = 0; // Track collected pebbles
+
     private ARRaycastManager arRaycastManager;
     static List<ARRaycastHit> hits = new List<ARRaycastHit>();
-
-    // Reference to the lb.Bird script
-    [SerializeField] private BirdAnim birdAnim;
     Vector2 m_TapStartPosition;
 
 
@@ -49,9 +59,6 @@ public class Bird : MonoBehaviour
             {
                 var hitPose = hits[0].pose;
 
-                // Teleport this bird to the hit position
-                // transform.position = hitPose.position;
-
                 // Trigger the bird animation
                 if (birdAnim != null)
                 {
@@ -74,5 +81,21 @@ public class Bird : MonoBehaviour
             Debug.Log("No tap input detected this frame.");
         }
 
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Rock"))
+        {
+            DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundRock1);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Rock"))
+        {
+
+        }
     }
 }
