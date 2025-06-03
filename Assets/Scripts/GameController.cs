@@ -6,8 +6,9 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 public class GameController : MonoBehaviour
 {
-    [HideInInspector]
     public Bird bird;
+    public Bird birdNPC;
+
     public PlaneDetectionController planeDetectionController;
     private Pitcher pitcher; // Reference to the Pitcher script
     [SerializeField] private ARRaycastManager arRaycastManager; // For AR plane detection
@@ -22,6 +23,7 @@ public class GameController : MonoBehaviour
     public GameObject rockPrefab;
     public int numOfRocksToSpawn = 5;
     public GameObject pitcherPrefab;
+    public GameObject birdNPCPrefab;
 
     private Vector2 prevTapStartPosition;
     public static GameController Instance { get; private set; }
@@ -71,11 +73,12 @@ public class GameController : MonoBehaviour
     private void HandleBirdSpawned(Bird bird)
     {
         this.bird = bird;
-        UIController.Instance.SetDialogueUIHolder(bird.dialogueUIHolder);
+        UIController.Instance.SetDialogueUIHolder(bird.dialogueUIHolder); // Index 0
         UIController.Instance.EnableObjectiveUI(true);
         DialogueController.Instance.PlayDialogueSequence(DialogueSequence.StartingDialogue);
         SpawnRocks();
         SpawnPitcher();
+        SpawnBirdNPC();
     }
 
     private void Update()
@@ -149,8 +152,8 @@ public class GameController : MonoBehaviour
                                 }
                                 else
                                 {
-                                    //Check is first objective is completed
-                                    if (!UIController.Instance.GetObjectives()[0].isCompleted)
+                                    //if "FindWaterSource" objective is not completed
+                                    if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.FindWaterSource))
                                     {
                                         UIController.Instance.SpawnDialogue("A beautiful pebble!\nBut I don't need it right now.", Color.black, 3f);
                                     }
@@ -197,6 +200,13 @@ public class GameController : MonoBehaviour
     public void SpawnPitcher()
     {
         GameObject pitcherInstance = planeDetectionController.SpawnPitcher(pitcherPrefab);
-        pitcher = pitcherInstance.GetComponent<Pitcher>(); // Assign the reference to the spawned pitcher
+        pitcher = pitcherInstance.GetComponent<Pitcher>();
+    }
+
+    public void SpawnBirdNPC()
+    {
+        GameObject birdNPCInstance = planeDetectionController.SpawnBirdNPC(birdNPCPrefab);
+        birdNPC = birdNPCInstance.GetComponent<Bird>();
+        UIController.Instance.SetDialogueUIHolder(birdNPC.dialogueUIHolder); //Index 1
     }
 }

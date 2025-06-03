@@ -558,6 +558,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bird: {fileID: 0}
+  birdNPC: {fileID: 0}
   planeDetectionController: {fileID: 999225784}
   arRaycastManager: {fileID: 999225785}
   tapStartPositionInput:
@@ -579,6 +580,8 @@ MonoBehaviour:
     type: 3}
   numOfRocksToSpawn: 10
   pitcherPrefab: {fileID: 2007978278708346564, guid: 05692dd398b8c1a4b88ef20e1f062752,
+    type: 3}
+  birdNPCPrefab: {fileID: 6972839298902826014, guid: f8c8ec91698ef224bb91f7a44fc5b979,
     type: 3}
 --- !u!4 &227572736
 Transform:
@@ -1619,8 +1622,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   birdController: {fileID: 1652873012}
   spawnUIHolder: {fileID: 741626410}
-  detectPlaneUIHolder: {fileID: 0}
-  dialogueUIHolder: {fileID: 0}
+  detectPlaneUIHolder: {fileID: 1502678963}
+  dialogueUIHolders: []
   dialoguePrefab: {fileID: 6481805553913461697, guid: c215f9ad5ac6ca64ba2fea5f8b8dcada,
     type: 3}
   dialogueList: []

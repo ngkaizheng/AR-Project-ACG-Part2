@@ -25,7 +25,7 @@ public class DialogueController : MonoBehaviour
         InitializeDialogueTracking();
     }
 
-    public void PlayDialogueSequence(DialogueSequence sequence, float delayBetweenLines = 1.5f)
+    public void PlayDialogueSequence(DialogueSequence sequence, float delayBetweenLines = 1.5f, int birdIndex = 0)
     {
         // Check if the sequence has already been played
         if (dialoguePlayedStatus[(int)sequence])
@@ -37,16 +37,16 @@ public class DialogueController : MonoBehaviour
         dialoguePlayedStatus[(int)sequence] = true;
 
         string[] lines = Dialogue.GetLines(sequence);
-        StartCoroutine(PlaySequenceCoroutine(lines, delayBetweenLines));
+        StartCoroutine(PlaySequenceCoroutine(lines, delayBetweenLines, birdIndex));
     }
 
-    private IEnumerator PlaySequenceCoroutine(string[] lines, float delay)
+    private IEnumerator PlaySequenceCoroutine(string[] lines, float delay, int birdIndex)
     {
         foreach (var line in lines)
         {
             if (!string.IsNullOrEmpty(line))
             {
-                UIController.Instance.SpawnDialogue(line, dialogueColor, defaultDuration);
+                UIController.Instance.SpawnDialogue(line, dialogueColor, defaultDuration, birdIndex);
 
                 // Play audio
                 GameController.Instance.bird.birdAnim.DisplayBehavior(birdBehaviors.sing);

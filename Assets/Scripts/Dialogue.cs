@@ -5,6 +5,7 @@ public enum DialogueSequence
 {
     StartingDialogue,
     FoundPitcher,
+    NPCGiveHint,
     FoundPebbles1,
     DropPebble1,
     DropPebble2,
@@ -29,8 +30,19 @@ public static class Dialogue
                 "A pitcher! Maybe it has water!",
                 "Water! But... I can't reach it.",
                 "The water is too low\nfor my beak to touch.",
-                "Think, think...\nHow can I make the water rise?",
-                "Pebbles! If I add pebbles,\nthe water will come up!"
+                "Maybe I can go ask for help?",
+                // "Think, think...\nHow can I make the water rise?",
+                // "Pebbles! If I add pebbles,\nthe water will come up!"
+            }
+        },
+        {
+            DialogueSequence.NPCGiveHint, new[]
+            {
+                "Hi there, little crow!\nI see you're thirsty.",
+                "I can help you with that.",
+                "If you find some pebbles,\nyou can drop them in the pitcher.",
+                "Each pebble will make the water rise.\nJust keep adding them until you can drink!",
+                "Good luck, little crow!\nYou can do it!"
             }
         },
         {
@@ -60,7 +72,7 @@ public static class Dialogue
                 "Success! The water reaches me now!",
                 "At last... cool, fresh water!\nI'm saved!",
                 "Small steps can solve big problems.\nPatience and cleverness win!",
-                "When faced with a challenge,\nthink like the crow with the pitcher!"
+                "Where there is a will, there is a way!"
             }
         },
     };

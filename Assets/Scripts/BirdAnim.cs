@@ -233,7 +233,7 @@ public class BirdAnim : MonoBehaviour
                 float rand = Random.value;
                 if (rand < 0.3f)
                 {
-                    DisplayBehavior(birdBehaviors.sing);
+                    // DisplayBehavior(birdBehaviors.sing);
                 }
                 else if (rand < 0.5f)
                 {

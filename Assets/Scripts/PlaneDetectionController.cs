@@ -364,4 +364,64 @@ public class PlaneDetectionController : MonoBehaviour
         return null;
     }
     #endregion
+
+
+    #region Spawn Bird NPC
+    public GameObject SpawnBirdNPC(GameObject birdPrefab)
+    {
+        if (birdPrefab == null)
+        {
+            Debug.LogError("Bird prefab is not assigned!");
+            return null;
+        }
+
+        List<ARPlane> activePlanes = new List<ARPlane>();
+        foreach (var plane in planeManager.trackables)
+        {
+            if (plane.boundary != null && plane.boundary.Count() > 2)
+            {
+                activePlanes.Add(plane);
+            }
+            else
+            {
+                Debug.LogWarning($"Skipping plane {plane.trackableId} due to invalid boundary.");
+            }
+        }
+
+        if (activePlanes.Count == 0)
+        {
+            Debug.LogWarning("No valid planes with boundaries to spawn bird on.");
+            return null;
+        }
+
+        int maxAttempts = 10; // Maximum number of attempts to spawn the bird
+        while (maxAttempts > 0)
+        {
+            ARPlane selectedPlane = activePlanes[Random.Range(0, activePlanes.Count)];
+            Vector3 spawnPosition = GetRandomPointInPlaneBoundary(selectedPlane);
+
+            // Verify the point is on the plane using raycasting
+            List<ARRaycastHit> hits = new List<ARRaycastHit>();
+            Vector2 screenPoint = Camera.main.WorldToScreenPoint(spawnPosition);
+            if (raycastManager.Raycast(screenPoint, hits, TrackableType.Planes))
+            {
+                foreach (var hit in hits)
+                {
+                    if (hit.trackableId == selectedPlane.trackableId)
+                    {
+                        GameObject bird = Instantiate(birdPrefab, hit.pose.position, Quaternion.identity);
+                        Debug.Log($"Bird spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
+                        return bird;
+                    }
+                }
+            }
+
+            maxAttempts--;
+            Debug.LogWarning($"Attempt to spawn bird failed. Remaining attempts: {maxAttempts}");
+        }
+
+        Debug.LogWarning("Failed to spawn bird after multiple attempts.");
+        return null;
+    }
+    #endregion
 }

@@ -16,7 +16,7 @@ public class UIController : MonoBehaviour
     public GameObject detectPlaneUIHolder;
 
     [Header("Dialogue Settings")]
-    [SerializeField] private GameObject dialogueUIHolder; // Parent for dialogue prefabs
+    [SerializeField] private List<GameObject> dialogueUIHolders = new List<GameObject>();
     [SerializeField] private GameObject dialoguePrefab; // Prefab for dialogue
     [SerializeField] private List<GameObject> dialogueList = new List<GameObject>();
 
@@ -82,26 +82,29 @@ public class UIController : MonoBehaviour
 
     public void SetDialogueUIHolder(GameObject newDialogueUIHolder)
     {
-        dialogueUIHolder = newDialogueUIHolder;
-        Debug.Log("Dialogue UI Holder has been set.");
+        if (!dialogueUIHolders.Contains(newDialogueUIHolder))
+        {
+            dialogueUIHolders.Add(newDialogueUIHolder);
+            Debug.Log($"Added dialogue UI holder. Total holders: {dialogueUIHolders.Count}");
+        }
     }
 
-    public void SpawnDialogue(string textContent, Color borderColor, float duration)
+    public void SpawnDialogue(string textContent, Color borderColor, float duration, int birdIndex = 0)
     {
-        if (dialoguePrefab != null && dialogueUIHolder != null)
+        if (dialoguePrefab != null && birdIndex < dialogueUIHolders.Count)
         {
-            GameObject dialogueInstance = Instantiate(dialoguePrefab, dialogueUIHolder.transform);
+            GameObject dialogueInstance = Instantiate(dialoguePrefab, dialogueUIHolders[birdIndex].transform);
             DialoguePrefabController dialogueController = dialogueInstance.GetComponent<DialoguePrefabController>();
 
             if (dialogueController != null)
             {
                 dialogueController.InitializeDialogue(textContent, borderColor, duration);
-                dialogueList.Add(dialogueInstance); // Add to the list for tracking
+                dialogueList.Add(dialogueInstance);
             }
         }
         else
         {
-            Debug.LogWarning("Dialogue prefab or dialogueUIHolder is not assigned!");
+            Debug.LogWarning($"Dialogue prefab or dialogueUIHolder for bird index {birdIndex} is not assigned!");
         }
     }
 
@@ -122,18 +125,22 @@ public class UIController : MonoBehaviour
     private void InitializeObjectives()
     {
         // Initialize only the first objective
-        objectives.Add(new Objective("Find the water resources."));
-        SpawnObjectiveUI(objectives[0]);
+        objectives.Add(new Objective(ObjectiveType.FindWaterSource, "Find the water resources."));
+        SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.FindWaterSource));
+    }
+
+    private void AskForHelpObjectives()
+    {
+        objectives.Add(new Objective(ObjectiveType.AskForHelp, "Ask for help from the crow."));
+        SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.AskForHelp));
     }
 
     private void AddPebbleObjectives()
     {
-        // Add the two pebble-related objectives
-        objectives.Add(new Objective("Collect 5 pebbles to raise the water level. (0/5)", false, 0, 5, true));
-        objectives.Add(new Objective("Put 5 pebbles in the pitcher to drink the water. (0/5)", false, 0, 5, true));
-        // Spawn UI for the new objectives
-        SpawnObjectiveUI(objectives[1]);
-        SpawnObjectiveUI(objectives[2]);
+        objectives.Add(new Objective(ObjectiveType.CollectPebbles, "Collect 5 pebbles to raise the water level.", false, 0, 5, true));
+        objectives.Add(new Objective(ObjectiveType.PutPebblesInPitcher, "Put 5 pebbles in the pitcher to drink the water.", false, 0, 5, true));
+        SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.CollectPebbles));
+        SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.PutPebblesInPitcher));
     }
 
     private void SpawnObjectiveUI(Objective objective)
@@ -155,52 +162,56 @@ public class UIController : MonoBehaviour
         }
     }
 
-    public void UpdateObjectiveProgress(int index, int newProgress)
+    public void UpdateObjectiveProgress(ObjectiveType type, int newProgress)
     {
-        if (index >= 0 && index < objectives.Count && objectives[index].isProgressBased)
+        Objective objective = objectives.Find(o => o.type == type);
+        if (objective != null && objective.isProgressBased)
         {
-            Objective obj = objectives[index];
-            obj.currentProgress = Mathf.Clamp(newProgress, 0, obj.targetProgress);
-            ObjectivePrefabController controller = objectiveInstances[index].GetComponent<ObjectivePrefabController>();
+            objective.currentProgress = Mathf.Clamp(newProgress, 0, objective.targetProgress);
+            ObjectivePrefabController controller = objectiveInstances[objectives.IndexOf(objective)].GetComponent<ObjectivePrefabController>();
             if (controller != null)
             {
-                controller.UpdateObjectiveText(obj.GetFormattedDescription());
-                Debug.Log($"Objective {index + 1} progress updated: {obj.currentProgress}/{obj.targetProgress}");
+                controller.UpdateObjectiveText(objective.GetFormattedDescription());
+                Debug.Log($"Objective '{objective.description}' progress updated: {objective.currentProgress}/{objective.targetProgress}");
             }
 
-            if (obj.currentProgress >= obj.targetProgress && !obj.isCompleted)
+            if (objective.currentProgress >= objective.targetProgress && !objective.isCompleted)
             {
-                CompleteObjective(index);
+                CompleteObjective(type);
             }
         }
         else
         {
-            Debug.LogWarning("Invalid objective index or objective is not progress-based!");
+            Debug.LogWarning($"Objective of type '{type}' is not progress-based or not found!");
         }
     }
 
-    public void CompleteObjective(int index)
+    public void CompleteObjective(ObjectiveType type)
     {
-        if (index >= 0 && index < objectives.Count)
+        Objective objective = objectives.Find(o => o.type == type);
+        if (objective != null)
         {
-            objectives[index].isCompleted = true;
-            ObjectivePrefabController controller = objectiveInstances[index].GetComponent<ObjectivePrefabController>();
+            objective.isCompleted = true;
+            ObjectivePrefabController controller = objectiveInstances[objectives.IndexOf(objective)].GetComponent<ObjectivePrefabController>();
             if (controller != null)
             {
                 controller.UpdateObjectiveStatus(true);
-                Debug.Log($"Objective {index + 1}: '{objectives[index].description}' completed.");
+                Debug.Log($"Objective '{objective.description}' completed.");
             }
 
-            // If the first objective is completed, add the pebble objectives
-            if (index == 0)
+            // Handle specific objectives
+            if (type == ObjectiveType.FindWaterSource)
+            {
+                AskForHelpObjectives();
+            }
+            else if (type == ObjectiveType.AskForHelp)
             {
                 AddPebbleObjectives();
-                // SpawnDialogue("Water resources found! New objectives: Collect and place pebbles.", Color.green, 5f);
             }
-            else
+            else if (type == ObjectiveType.CollectPebbles || type == ObjectiveType.PutPebblesInPitcher)
             {
-                // Check if both pebble objectives (indices 1 and 2) are completed
-                bool allPebbleObjectivesCompleted = objectives[1].isCompleted && objectives[2].isCompleted;
+                bool allPebbleObjectivesCompleted = objectives.Find(o => o.type == ObjectiveType.CollectPebbles).isCompleted &&
+                                                    objectives.Find(o => o.type == ObjectiveType.PutPebblesInPitcher).isCompleted;
 
                 if (allPebbleObjectivesCompleted)
                 {
@@ -210,13 +221,23 @@ public class UIController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Invalid objective index!");
+            Debug.LogWarning($"Objective of type '{type}' not found!");
         }
     }
 
     public List<Objective> GetObjectives()
     {
         return objectives;
+    }
+    public Objective GetObjectiveByType(ObjectiveType type)
+    {
+        return objectives.Find(o => o.type == type);
+    }
+
+    public bool IsObjectiveCompleted(ObjectiveType type)
+    {
+        Objective objective = GetObjectiveByType(type);
+        return objective != null && objective.isCompleted;
     }
     #endregion
 }

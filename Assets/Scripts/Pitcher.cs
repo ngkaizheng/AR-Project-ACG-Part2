@@ -81,26 +81,33 @@ public class Pitcher : MonoBehaviour
         {
             pebblesInBottle++;
             UpdateShaderFill();
-            UIController.Instance.UpdateObjectiveProgress(2, pebblesInBottle); // Index 2 for pitcher pebble progress
+            UIController.Instance.UpdateObjectiveProgress(ObjectiveType.PutPebblesInPitcher, pebblesInBottle); // Index 2 for pitcher pebble progress
 
-            //Check if the progress of the second objective progress is 1/5
-            if (UIController.Instance.GetObjectives()[2].currentProgress == 1 &&
-                !UIController.Instance.GetObjectives()[2].isCompleted)
+            Objective pitcherObjective = UIController.Instance.GetObjectiveByType(ObjectiveType.PutPebblesInPitcher);
+
+            if (pitcherObjective != null)
             {
-                DialogueController.Instance.PlayDialogueSequence(DialogueSequence.DropPebble1);
+                // Check if the progress of the objective is 1/5
+                if (pitcherObjective.currentProgress == 1 && !pitcherObjective.isCompleted)
+                {
+                    DialogueController.Instance.PlayDialogueSequence(DialogueSequence.DropPebble1);
+                }
+
+                // Check if the progress of the objective is 4/5
+                if (pitcherObjective.currentProgress == 4 && !pitcherObjective.isCompleted)
+                {
+                    DialogueController.Instance.PlayDialogueSequence(DialogueSequence.DropPebble2);
+                }
+
+                // Check if the objective is completed (5/5)
+                if (pitcherObjective.isCompleted)
+                {
+                    DialogueController.Instance.PlayDialogueSequence(DialogueSequence.ReachWater);
+                }
             }
-
-            //Check if the progress of the second objective progress is 4/5
-            if (UIController.Instance.GetObjectives()[2].currentProgress == 4 &&
-                !UIController.Instance.GetObjectives()[2].isCompleted)
+            else
             {
-                DialogueController.Instance.PlayDialogueSequence(DialogueSequence.DropPebble2);
-            }
-
-            //Check if the progress of the second objective progress is 5/5
-            if (UIController.Instance.GetObjectives()[2].isCompleted)
-            {
-                DialogueController.Instance.PlayDialogueSequence(DialogueSequence.ReachWater);
+                Debug.LogWarning("Objective 'PutPebblesInPitcher' not found!");
             }
         }
         else
