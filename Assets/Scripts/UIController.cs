@@ -11,8 +11,9 @@ public class UIController : MonoBehaviour
     [Header("Bird Controller")]
     [SerializeField] private BirdController birdController;
 
-    [Header("Spawn UI Settings")]
+    [Header("UI Settings")]
     public GameObject spawnUIHolder;
+    public GameObject detectPlaneUIHolder;
 
     [Header("Dialogue Settings")]
     [SerializeField] private GameObject dialogueUIHolder; // Parent for dialogue prefabs
@@ -40,15 +41,9 @@ public class UIController : MonoBehaviour
             }
         }
 
-        if (spawnUIHolder == null)
-        {
-            Debug.LogWarning("Spawn UI Holder is not assigned! Please assign it in the inspector.");
-        }
-        else
-        {
-            spawnUIHolder.SetActive(false); // Ensure the UI is initially disabled
-            Debug.Log("Spawn UI Holder initialized and set to inactive.");
-        }
+
+        spawnUIHolder.SetActive(false); // Ensure the UI is initially disabled
+        detectPlaneUIHolder.SetActive(true); // Ensure the UI is initially disabled
 
         if (objectiveUIHolder == null)
         {
@@ -78,14 +73,10 @@ public class UIController : MonoBehaviour
 
     public void EnableSpawnUI(bool enable)
     {
-        if (spawnUIHolder != null)
+        spawnUIHolder.SetActive(enable);
+        if (enable)
         {
-            spawnUIHolder.SetActive(enable);
-            Debug.Log($"Spawn UI is now {(enable ? "enabled" : "disabled")}");
-        }
-        else
-        {
-            Debug.LogWarning("Spawn UI Holder is not assigned!");
+            detectPlaneUIHolder.SetActive(false);
         }
     }
 

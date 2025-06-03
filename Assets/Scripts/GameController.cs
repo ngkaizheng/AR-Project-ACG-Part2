@@ -149,8 +149,16 @@ public class GameController : MonoBehaviour
                                 }
                                 else
                                 {
-                                    bird.CollectPebble(hitObject);
-                                    Debug.Log($"Rock collected at position: {hitObject.transform.position}");
+                                    //Check is first objective is completed
+                                    if (!UIController.Instance.GetObjectives()[0].isCompleted)
+                                    {
+                                        UIController.Instance.SpawnDialogue("A beautiful pebble!\nBut I don't need it right now.", Color.black, 3f);
+                                    }
+                                    else
+                                    {
+                                        bird.CollectPebble(hitObject);
+                                        Debug.Log($"Rock collected at position: {hitObject.transform.position}");
+                                    }
                                 }
                             }
                             else
