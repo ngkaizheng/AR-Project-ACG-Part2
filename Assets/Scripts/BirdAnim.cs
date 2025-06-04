@@ -83,7 +83,8 @@ public class BirdAnim : MonoBehaviour
 
     public void FlyToTarget(Vector3 target)
     {
-        if (dead || flying || landing || paused) return;
+        // if (dead || flying || landing || paused) return;
+        if (dead || paused) return;
 
         // Stop existing flight coroutine if running
         if (flyCoroutine != null)
@@ -135,6 +136,7 @@ public class BirdAnim : MonoBehaviour
         distanceToTarget = Vector3.Distance(transform.position, target);
         Vector3 previousPosition = transform.position; // Store the initial position
 
+        transform.rotation = Quaternion.LookRotation((target - transform.position).normalized);
         while (distanceToTarget > 0.15f * birdScale)
         {
             if (!paused)

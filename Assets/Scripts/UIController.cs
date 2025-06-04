@@ -26,6 +26,10 @@ public class UIController : MonoBehaviour
     [SerializeField] private List<Objective> objectives = new List<Objective>(); // List of objectives
     [SerializeField] private List<GameObject> objectiveInstances = new List<GameObject>(); // Active objective UI instances
 
+    [Header("Button Settings")]
+    [SerializeField] private Button rayVisibilityToggleButton; // Button to toggle ray visibility
+    [SerializeField] private TextMeshProUGUI rayVisibilityButtonText; // Text for On/Off state
+
 
     public static UIController Instance;
 
@@ -65,6 +69,24 @@ public class UIController : MonoBehaviour
             Destroy(gameObject); // Ensure only one instance exists
         }
         InitializeObjectives();
+        InitButtons();
+    }
+
+    private void InitButtons()
+    {
+        rayVisibilityToggleButton.onClick.AddListener(ToggleRayVisibility);
+        rayVisibilityButtonText.text = GameController.Instance.isRayVisible ? "Ray: On" : "Ray: Off";
+    }
+
+    private void ToggleRayVisibility()
+    {
+        bool isVisible = GameController.Instance.isRayVisible;
+        GameController.Instance.isRayVisible = !isVisible; // Toggle visibility
+        rayVisibilityButtonText.text = GameController.Instance.isRayVisible ? "Ray: On" : "Ray: Off";
+        if (birdController.bird != null)
+        {
+            birdController.bird.SetLineRendererVisible(GameController.Instance.isRayVisible);
+        }
     }
 
     void Update()
@@ -137,8 +159,8 @@ public class UIController : MonoBehaviour
 
     private void AddPebbleObjectives()
     {
-        objectives.Add(new Objective(ObjectiveType.CollectPebbles, "Collect 5 pebbles to raise the water level.", false, 0, 5, true));
-        objectives.Add(new Objective(ObjectiveType.PutPebblesInPitcher, "Put 5 pebbles in the pitcher to drink the water.", false, 0, 5, true));
+        objectives.Add(new Objective(ObjectiveType.CollectPebbles, "Collect 5 pebbles to raise the water level. (0/5)", false, 0, 5, true));
+        objectives.Add(new Objective(ObjectiveType.PutPebblesInPitcher, "Put 5 pebbles in the pitcher to drink the water. (0/5)", false, 0, 5, true));
         SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.CollectPebbles));
         SpawnObjectiveUI(objectives.Find(o => o.type == ObjectiveType.PutPebblesInPitcher));
     }

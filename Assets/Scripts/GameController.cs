@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
@@ -24,6 +25,9 @@ public class GameController : MonoBehaviour
     public int numOfRocksToSpawn = 5;
     public GameObject pitcherPrefab;
     public GameObject birdNPCPrefab;
+
+    [Header("Raycast Visualization")]
+    public bool isRayVisible = true; // Toggle for ray visibility
 
     private Vector2 prevTapStartPosition;
     public static GameController Instance { get; private set; }
@@ -91,104 +95,75 @@ public class GameController : MonoBehaviour
         Vector2 tapStartPosition;
         bool tapPerformedThisFrame = tapStartPositionInput.TryReadValue(out tapStartPosition) && tapStartPosition != prevTapStartPosition;
 
-        if (tapPerformedThisFrame)
+        var isPointerOverUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
+        if (!tapPerformedThisFrame || isPointerOverUI)
+            return;
+
+        // Use ARRaycastManager to detect hits on AR planes
+        if (arRaycastManager != null && arRaycastManager.Raycast(tapStartPosition, hits, TrackableType.PlaneWithinPolygon | TrackableType.Planes))
         {
-            // Use ARRaycastManager to detect hits on AR planes
-            if (arRaycastManager != null && arRaycastManager.Raycast(tapStartPosition, hits, TrackableType.PlaneWithinPolygon | TrackableType.Planes))
+            var hitPose = hits[0].pose;
+            Collider[] colliders = Physics.OverlapSphere(hitPose.position, 0.01f); // Adjust radius as needed
+
+            foreach (var collider in colliders)
             {
-                var hitPose = hits[0].pose;
-                // Check for colliders near the hit position
-                Collider[] colliders = Physics.OverlapSphere(hitPose.position, 0.01f); // Adjust radius as needed
-                bool objectHandled = false;
+                GameObject hitObject = collider.gameObject;
 
-                foreach (var collider in colliders)
+                if (collider.isTrigger) //Bird collider is set to trigger
                 {
-                    GameObject hitObject = collider.gameObject;
-                    Debug.Log($"Hit object: {hitObject.name} at position: {hitObject.transform.position}, Tag: {hitObject.tag}");
+                    Debug.Log($"Skipping trigger collider: {hitObject.name}");
+                    continue;
+                }
 
-                    if (collider.isTrigger)
+                //Handle tap on pitcher
+                if (hitObject.CompareTag("Pitcher"))
+                {
+                    if (pitcher.birdInRange && bird.IsCarryingPebble())
                     {
-                        Debug.Log($"Skipping trigger collider: {hitObject.name}");
-                        continue;
+                        pitcher.AddPebbleToBottle();
+                        bird.SetCarryingPebble(false);
+                        break;
                     }
-
-                    // Skip the bird's own GameObject
-                    if (hitObject == bird?.gameObject)
+                    else
                     {
-                        Debug.Log($"Skipping bird GameObject: {hitObject.name}");
-                        continue;
-                    }
-
-                    // Handle tap on pitcher
-                    if (hitObject.GetComponent<Pitcher>() != null && pitcher != null)
-                    {
-                        if (pitcher.birdInRange && bird != null && bird.IsCarryingPebble())
-                        {
-                            pitcher.AddPebbleToBottle();
-                            bird.SetCarryingPebble(false);
-                            Debug.Log($"Pebble added to pitcher via GameController.");
-                        }
-                        else
-                        {
-                            bird.FlyToTarget(hitObject.transform.position);
-                            Debug.Log("Bird is not in range or not carrying a pebble.");
-                        }
-                        prevTapStartPosition = tapStartPosition;
-                        objectHandled = true;
-                        break; // Exit after handling pitcher
-                    }
-
-                    // Handle tap on rock
-                    if (hitObject.CompareTag("Rock"))
-                    {
-                        if (bird != null)
-                        {
-                            float distanceToRock = Vector3.Distance(bird.transform.position, hitObject.transform.position);
-                            if (distanceToRock <= bird.GetCollectDistance())
-                            {
-                                if (bird.IsCarryingPebble())
-                                {
-                                    UIController.Instance.SpawnDialogue("I can only carry one pebble at a time!", Color.red, 3f);
-                                }
-                                else
-                                {
-                                    //if "FindWaterSource" objective is not completed
-                                    if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.FindWaterSource))
-                                    {
-                                        UIController.Instance.SpawnDialogue("A beautiful pebble!\nBut I don't need it right now.", Color.black, 3f);
-                                    }
-                                    else
-                                    {
-                                        bird.CollectPebble(hitObject);
-                                        Debug.Log($"Rock collected at position: {hitObject.transform.position}");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                bird.FlyToTarget(hitObject.transform.position);
-                                Debug.Log($"Bird flying to rock at position: {hitObject.transform.position}");
-                            }
-                        }
-                        prevTapStartPosition = tapStartPosition;
-                        objectHandled = true;
-                        break; // Exit after handling rock
+                        Debug.Log("Bird is not in range or not carrying a pebble.");
                     }
                 }
 
-                // If no objects were hit, fly to the plane position
-                if (!objectHandled && bird != null)
+                //Handle tap on rock
+                if (hitObject.CompareTag("Rock"))
+                {
+                    float distanceToRock = Vector3.Distance(bird.transform.position, hitObject.transform.position);
+                    if (distanceToRock > bird.GetCollectDistance())
+                        continue;
+
+                    if (bird.IsCarryingPebble())
+                    {
+                        UIController.Instance.SpawnDialogue("I can only carry one pebble at a time!", Color.red, 3f);
+                        break;
+                    }
+                    else if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
+                    {
+                        UIController.Instance.SpawnDialogue("A beautiful pebble!\nBut I don't need it right now.", Color.black, 3f);
+                        break;
+                    }
+                    else if (UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
+                    {
+                        bird.CollectPebble(hitObject);
+                        break;
+                    }
+                }
+
+                // If no specific object was hit, fly to the plane position
+                if (bird != null)
                 {
                     bird.FlyToTarget(hitPose.position);
                     Debug.Log($"Bird flying to plane position: {hitPose.position}");
                 }
+
             }
-            else
-            {
-                Debug.LogWarning("No AR plane or objects detected at tap position.");
-            }
+            prevTapStartPosition = tapStartPosition;
         }
-        prevTapStartPosition = tapStartPosition;
     }
 
     //Spwan some rocks on the AR plane

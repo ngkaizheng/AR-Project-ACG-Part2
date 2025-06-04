@@ -31,6 +31,11 @@ public class Bird : MonoBehaviour
     private int pebblesCollected = 0; // Track collected pebbles
     public bool isCarryingPebble = false; // Track if the bird is carrying a pebble
 
+    [Header("Raycast Visualization")]
+    [SerializeField] private LineRenderer lineRenderer; // LineRenderer for visualizing the raycast
+    [SerializeField] private float rayLength = 5f; // Maximum length of the ray
+    [SerializeField] private GameObject eyePosObject; // Reference to the eye position object
+
     private ARRaycastManager arRaycastManager;
     static List<ARRaycastHit> hits = new List<ARRaycastHit>();
     Vector2 m_TapStartPosition;
@@ -43,88 +48,60 @@ public class Bird : MonoBehaviour
 
         if (birdAnim == null)
             birdAnim = GetComponent<BirdAnim>();
+
+        // Initialize the LineRenderer
+        if (lineRenderer == null && !isNPC)
+        {
+            lineRenderer = gameObject.AddComponent<LineRenderer>();
+            lineRenderer.startWidth = 0.02f; // Set the width of the line
+            lineRenderer.endWidth = 0.02f;
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default")); // Assign a default material
+            lineRenderer.startColor = Color.green; // Start color of the line
+            lineRenderer.endColor = Color.red; // End color of the line
+        }
+
+        if (GameController.Instance.isRayVisible)
+        {
+            lineRenderer.enabled = true;
+        }
+        else
+        {
+            lineRenderer.enabled = false;
+        }
     }
 
     void Update()
     {
-        // HandleTapInput();
+        if (isNPC)
+            return;
+        VisualizeRaycast();
     }
 
-    // public void HandleTapInput()
-    // {
-    //     var prevTapStartPosition = m_TapStartPosition;
-    //     var tapPerformedThisFrame = m_TapStartPositionInput.TryReadValue(out m_TapStartPosition) && prevTapStartPosition != m_TapStartPosition;
+    private void VisualizeRaycast()
+    {
+        // Perform a raycast from lineRenderer's position in the forward direction
+        Ray ray = new Ray(eyePosObject.transform.position, eyePosObject.transform.forward);
+        RaycastHit hit;
 
-    //     if (tapPerformedThisFrame)
-    //     {
-    //         // Convert screen tap to a ray
-    //         Ray ray = Camera.main.ScreenPointToRay(m_TapStartPosition);
+        // Set the start point of the LineRenderer
+        lineRenderer.SetPosition(0, ray.origin);
 
-    //         // Use RaycastAll to detect all objects along the ray
-    //         RaycastHit[] hitsPhysics = Physics.RaycastAll(ray, Mathf.Infinity);
-    //         Debug.Log($"RaycastAll detected {hitsPhysics.Length} hits.");
+        if (Physics.Raycast(ray, out hit, rayLength))
+        {
+            // Set the end point of the LineRenderer to the hit point
+            lineRenderer.SetPosition(1, hit.point);
 
-    //         // Loop through all hits to find a rock
-    //         foreach (RaycastHit hit in hitsPhysics)
-    //         {
-    //             GameObject hitObject = hit.collider.gameObject;
-    //             Debug.Log($"Hit object: {hitObject.name} at position: {hit.point}, Tag: {hitObject.tag}");
+            // Optional: Log the hit object
+            Debug.Log($"Raycast hit: {hit.collider.gameObject.name}");
 
-    //             // Skip the bird's own GameObject
-    //             if (hitObject == gameObject)
-    //             {
-    //                 Debug.Log($"Skipping bird GameObject: {hitObject.name}");
-    //                 continue;
-    //             }
-
-    //             if (hitObject.CompareTag("Rock"))
-    //             {
-    //                 float distanceToRock = Vector3.Distance(transform.position, hitObject.transform.position);
-    //                 if (distanceToRock <= collectDistance)
-    //                 {
-    //                     CollectPebble(hitObject);
-    //                     Debug.Log($"Rock hit and collected at position: {hitObject.transform.position}");
-    //                 }
-    //                 else
-    //                 {
-    //                     if (birdAnim != null)
-    //                     {
-    //                         birdAnim.FlyToTarget(hitObject.transform.position);
-    //                         Debug.Log($"Bird flying to rock at position: {hitObject.transform.position}");
-    //                     }
-    //                     else
-    //                     {
-    //                         Debug.LogWarning("BirdAnim script is not assigned or found on the GameObject.");
-    //                     }
-    //                 }
-    //                 return; // Exit after handling rock
-    //             }
-    //         }
-
-    //         // If no rock was hit, try ARRaycastManager for planes
-    //         if (arRaycastManager.Raycast(m_TapStartPosition, hits, TrackableType.PlaneWithinPolygon | TrackableType.Planes))
-    //         {
-    //             var hitPose = hits[0].pose;
-    //             if (birdAnim != null)
-    //             {
-    //                 birdAnim.FlyToTarget(hitPose.position);
-    //                 Debug.Log($"Bird flying to plane position: {hitPose.position}");
-    //             }
-    //             else
-    //             {
-    //                 Debug.LogWarning("BirdAnim script is not assigned or found on the GameObject.");
-    //             }
-    //         }
-    //         else
-    //         {
-    //             Debug.LogWarning("No AR Plane or Rock detected at the tap position.");
-    //         }
-    //     }
-    //     else
-    //     {
-    //         Debug.Log("No tap input detected this frame.");
-    //     }
-    // }
+            HandleRaycastHit(hit);
+        }
+        else
+        {
+            // Set the end point of the LineRenderer to the maximum ray length
+            lineRenderer.SetPosition(1, ray.origin + ray.direction * rayLength);
+        }
+    }
     public void CollectPebble(GameObject pebble)
     {
         pebblesCollected++;
@@ -161,25 +138,27 @@ public class Bird : MonoBehaviour
         isCarryingPebble = carrying;
     }
 
-    private void OnTriggerEnter(Collider other)
+    public void SetLineRendererVisible(bool visible)
     {
-        if (isNPC)
-            return; // Skip interaction if this is an NPC bird
+        lineRenderer.enabled = visible;
+    }
+    public bool GetLineRendererVisible()
+    {
+        return lineRenderer.enabled;
+    }
 
-        if (other.CompareTag("Rock"))
+    private void HandleRaycastHit(RaycastHit hit)
+    {
+        // Check if the hit object is a pebble
+        if (hit.collider.CompareTag("Rock"))
         {
-            // if (UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp) &&
-            //    !DialogueController.Instance.GetDialoguePlayedStatus()[(int)DialogueSequence.FoundPebbles1])
-            // {
-            //     DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundPebbles1);
-            // }
             if (UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
             {
                 DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundPebbles1);
             }
         }
 
-        if (other.CompareTag("Pitcher"))
+        if (hit.collider.CompareTag("Pitcher"))
         {
             if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.FindWaterSource))
             {
@@ -188,7 +167,7 @@ public class Bird : MonoBehaviour
             }
         }
 
-        if (other.CompareTag("NPC"))
+        if (hit.collider.CompareTag("NPC"))
         {
             if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
             {
@@ -197,6 +176,43 @@ public class Bird : MonoBehaviour
             }
         }
     }
+
+    // private void OnTriggerEnter(Collider other)
+    // {
+    //     if (isNPC)
+    //         return; // Skip interaction if this is an NPC bird
+
+    //     if (other.CompareTag("Rock"))
+    //     {
+    //         // if (UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp) &&
+    //         //    !DialogueController.Instance.GetDialoguePlayedStatus()[(int)DialogueSequence.FoundPebbles1])
+    //         // {
+    //         //     DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundPebbles1);
+    //         // }
+    //         if (UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
+    //         {
+    //             DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundPebbles1);
+    //         }
+    //     }
+
+    //     if (other.CompareTag("Pitcher"))
+    //     {
+    //         if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.FindWaterSource))
+    //         {
+    //             UIController.Instance.CompleteObjective(ObjectiveType.FindWaterSource);
+    //             DialogueController.Instance.PlayDialogueSequence(DialogueSequence.FoundPitcher);
+    //         }
+    //     }
+
+    //     if (other.CompareTag("NPC"))
+    //     {
+    //         if (!UIController.Instance.IsObjectiveCompleted(ObjectiveType.AskForHelp))
+    //         {
+    //             UIController.Instance.CompleteObjective(ObjectiveType.AskForHelp);
+    //             DialogueController.Instance.PlayDialogueSequence(DialogueSequence.NPCGiveHint, birdIndex: 1);
+    //         }
+    //     }
+    // }
 
     private void OnTriggerExit(Collider other)
     {

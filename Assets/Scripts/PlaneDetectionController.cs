@@ -15,7 +15,8 @@ public class PlaneDetectionController : MonoBehaviour
     private float accumulatedPlaneSize = 0.0f;
     private ARRaycastManager raycastManager; // Reference to ARRaycastManager
     private Dictionary<TrackableId, Vector2> planeSizeLookup = new Dictionary<TrackableId, Vector2>();
-
+    private List<Vector3> spawnedItemsPosition = new List<Vector3>();
+    private float distanceSpawnedItems = 0.25f;
 
     private void Awake()
     {
@@ -171,7 +172,6 @@ public class PlaneDetectionController : MonoBehaviour
             return;
         }
 
-        List<Vector3> spawnedRockPositions = new List<Vector3>();
         List<ARPlane> activePlanes = new List<ARPlane>();
         foreach (var plane in planeManager.trackables)
         {
@@ -209,10 +209,10 @@ public class PlaneDetectionController : MonoBehaviour
                     if (hit.trackableId == selectedPlane.trackableId)
                     {
                         // Check if the position is too close to existing rocks
-                        if (!IsPositionTooClose(hit.pose.position, spawnedRockPositions, 0.5f))
+                        if (!IsPositionTooClose(hit.pose.position, spawnedItemsPosition, distanceSpawnedItems))
                         {
                             GameObject rock = Instantiate(rockPrefab, hit.pose.position, Quaternion.identity);
-                            spawnedRockPositions.Add(hit.pose.position);
+                            spawnedItemsPosition.Add(hit.pose.position);
                             rocksSpawned++;
                             Debug.Log($"Rock {rocksSpawned} spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
                             break;
@@ -349,8 +349,13 @@ public class PlaneDetectionController : MonoBehaviour
                 {
                     if (hit.trackableId == selectedPlane.trackableId)
                     {
+                        if (IsPositionTooClose(hit.pose.position, spawnedItemsPosition, distanceSpawnedItems))
+                        {
+                            Debug.LogWarning($"Position {hit.pose.position} is too close to existing items. Retrying...");
+                            continue; // Skip this position and try again
+                        }
                         GameObject pitcher = Instantiate(pitcherPrefab, hit.pose.position, Quaternion.identity);
-                        Debug.Log($"Pitcher spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
+                        spawnedItemsPosition.Add(hit.pose.position);
                         return pitcher;
                     }
                 }
@@ -409,8 +414,14 @@ public class PlaneDetectionController : MonoBehaviour
                 {
                     if (hit.trackableId == selectedPlane.trackableId)
                     {
+                        if (IsPositionTooClose(hit.pose.position, spawnedItemsPosition, distanceSpawnedItems))
+                        {
+                            Debug.LogWarning($"Position {hit.pose.position} is too close to existing items. Retrying...");
+                            continue;
+                        }
+
                         GameObject bird = Instantiate(birdPrefab, hit.pose.position, Quaternion.identity);
-                        Debug.Log($"Bird spawned at {hit.pose.position} on plane {selectedPlane.trackableId}");
+                        spawnedItemsPosition.Add(hit.pose.position);
                         return bird;
                     }
                 }
