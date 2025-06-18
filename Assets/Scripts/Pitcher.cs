@@ -109,6 +109,15 @@ public class Pitcher : MonoBehaviour
             {
                 Debug.LogWarning("Objective 'PutPebblesInPitcher' not found!");
             }
+
+            // POP-UP TRIGGER: Show pop-up when 5 pebbles are collected
+            if (pebblesInBottle == maxPebbles)
+            {
+                if (PebblePopupTrigger.Instance != null)
+                {
+                    PebblePopupTrigger.Instance.ShowPopup();
+                }
+            }
         }
         else
         {
